@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaStalk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#3B82F6',
+                            50: '#EFF6FF',
+                            100: '#DBEAFE',
+                            200: '#BFDBFE',
+                            300: '#93C5FD',
+                            400: '#60A5FA',
+                            500: '#3B82F6',
+                            600: '#2563EB',
+                            700: '#1D4ED8',
+                            800: '#1E40AF',
+                            900: '#1E3A8A',
+                        },
+                        dark: {
+                            DEFAULT: '#0F172A',
+                            50: '#F8FAFC',
+                            100: '#F1F5F9',
+                            200: '#E2E8F0',
+                            300: '#CBD5E1',
+                            400: '#94A3B8',
+                            500: '#64748B',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1E293B',
+                            900: '#0F172A',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-in-out',
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0F172A;
+            color: #F8FAFC;
+            overflow-x: hidden;
+        }
+        
+        .glass {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .gradient-text {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            background-image: linear-gradient(90deg, #3B82F6, #60A5FA);
+        }
+        
+        .rounded-button {
+            border-radius: 12px;
+        }
+        
+        .modal {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        .modal.active {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        .profile-pic {
+            border: 2px solid #3B82F6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .grid-bg {
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-top-color: #3B82F6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .result-card {
+            transition: all 0.3s ease;
+        }
+        
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+        }
+        
+        .error-shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        
+        @keyframes shake {
+            10%, 90% { transform: translateX(-1px); }
+            20%, 80% { transform: translateX(2px); }
+            30%, 50%, 70% { transform: translateX(-4px); }
+            40%, 60% { transform: translateX(4px); }
+        }
+    </style>
+</head>
+<body class="grid-bg min-h-screen">
+    <!-- Header -->
+    <header class="container mx-auto px-4 py-6">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32Z" fill="#3B82F6"/>
+                    <path d="M19.5 12C19.5 10.3431 18.1569 9 16.5 9C14.8431 9 13.5 10.3431 13.5 12C13.5 13.6569 14.8431 15 16.5 15C18.1569 15 19.5 13.6569 19.5 12Z" fill="white"/>
+                    <path d="M12 18C10.3431 18 9 16.6569 9 15C9 13.3431 10.3431 12 12 12C13.6569 12 15 13.3431 15 15C15 16.6569 13.6569 18 12 18Z" fill="white"/>
+                    <path d="M21 18C19.3431 18 18 16.6569 18 15C18 13.3431 19.3431 12 21 12C22.6569 12 24 13.3431 24 15C24 16.6569 22.6569 18 21 18Z" fill="white"/>
+                    <path d="M16.5 23C14.8431 23 13.5 21.6569 13.5 20C13.5 18.3431 14.8431 17 16.5 17C18.1569 17 19.5 18.3431 19.5 20C19.5 21.6569 18.1569 23 16.5 23Z" fill="white"/>
+                </svg>
+                <h1 class="text-2xl font-bold gradient-text">InstaStalk</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="themeToggle" class="w-10 h-10 flex items-center justify-center rounded-full bg-primary/20 hover:bg-primary/30 transition-colors duration-200">
+                    <i class="ri-sun-line text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+        <section class="glass rounded-xl p-6 mb-8 text-center animate-fade-in">
+            <div class="flex flex-col items-center">
+                <div class="w-16 h-16 flex items-center justify-center mb-4 bg-primary/10 rounded-full">
+                    <i class="ri-spy-line ri-2x text-primary"></i>
+                </div>
+                <h2 class="text-3xl font-bold mb-2 gradient-text">Instagram Stalker</h2>
+                <p class="text-gray-300 mb-6">Obtenha informações detalhadas sobre qualquer perfil do Instagram</p>
+                
+                <div class="w-full max-w-md mx-auto relative">
+                    <div class="relative">
+                        <input type="text" id="usernameInput" placeholder="Digite o username do Instagram" class="w-full bg-dark-800 border border-primary/30 rounded-button py-3 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200">
+                        <button id="searchBtn" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary hover:bg-primary/90 text-white p-2 rounded-full transition-colors duration-200">
+                            <i class="ri-search-line"></i>
+                        </button>
+                    </div>
+                    <p id="errorMessage" class="text-red-400 text-sm mt-2 hidden"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section id="resultsSection" class="hidden animate-fade-in">
+            <div class="glass rounded-xl p-6 result-card">
+                <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-6">
+                    <!-- Profile Picture -->
+                    <div class="relative">
+                        <div class="w-32 h-32 rounded-full overflow-hidden profile-pic">
+                            <img id="profilePic" src="" alt="Profile" class="w-full h-full object-cover">
+                        </div>
+                        <div id="verifiedBadge" class="absolute -bottom-2 -right-2 bg-primary rounded-full p-1 hidden">
+                            <i class="ri-checkbox-circle-fill text-white"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Profile Info -->
+                    <div class="flex-1 text-center md:text-left">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+                            <div>
+                                <h3 id="fullName" class="text-xl font-semibold"></h3>
+                                <p id="username" class="text-primary text-sm"></p>
+                            </div>
+                            <div class="mt-2 md:mt-0 flex space-x-2 justify-center md:justify-start">
+                                <span id="privateBadge" class="bg-primary/10 text-primary text-xs py-1 px-2 rounded-full hidden">
+                                    <i class="ri-lock-fill mr-1"></i> Privado
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <p id="bio" class="text-gray-300 mb-4"></p>
+                        
+                        <div class="grid grid-cols-3 gap-4 max-w-md mx-auto md:mx-0">
+                            <div class="bg-dark-800 rounded-lg p-3">
+                                <p class="text-primary font-semibold text-sm">Posts</p>
+                                <p id="postsCount" class="text-xl font-bold"></p>
+                            </div>
+                            <div class="bg-dark-800 rounded-lg p-3">
+                                <p class="text-primary font-semibold text-sm">Seguidores</p>
+                                <p id="followersCount" class="text-xl font-bold"></p>
+                            </div>
+                            <div class="bg-dark-800 rounded-lg p-3">
+                                <p class="text-primary font-semibold text-sm">Seguindo</p>
+                                <p id="followingCount" class="text-xl font-bold"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <section id="loadingSection" class="hidden">
+            <div class="glass rounded-xl p-12 text-center">
+                <div class="flex flex-col items-center justify-center">
+                    <div class="loading-spinner mb-4"></div>
+                    <h3 class="text-lg font-medium mb-2">Buscando informações...</h3>
+                    <p class="text-gray-400">Isso pode levar alguns segundos</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Developer Section -->
+    <section class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="glass rounded-xl p-6 text-center animate-fade-in">
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 flex items-center justify-center mb-4 bg-primary/10 rounded-full">
+                    <i class="ri-code-s-slash-line ri-xl text-primary"></i>
+                </div>
+                <h2 class="text-xl font-semibold mb-6">Desenvolvedor</h2>
+                <div class="w-24 h-24 rounded-full overflow-hidden mb-4 profile-pic">
+                    <img src="https://i.imgur.com/gi0h7c1.jpeg" alt="Ramon" class="w-full h-full object-cover">
+                </div>
+                <h3 class="text-lg font-medium mb-2">Ramon</h3>
+                <button id="openModalBtn" class="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-button transition-colors duration-200 cursor-pointer">
+                    Sobre mim
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="container mx-auto px-4 py-8 text-center text-gray-400 text-sm">
+        <p>© 2025 InstaStalk | Todos os direitos reservados.</p>
+    </footer>
+
+    <!-- Developer Modal -->
+    <div id="developerModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" id="modalOverlay"></div>
+        <div class="modal relative w-full max-w-md rounded-xl p-6 transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
+            <button id="closeModalBtn" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-primary/20 hover:bg-primary/30 cursor-pointer transition-colors duration-200">
+                <i class="ri-close-line text-lg"></i>
+            </button>
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 mx-auto rounded-full overflow-hidden mb-4 profile-pic">
+                    <img src="https://i.imgur.com/gi0h7c1.jpeg" alt="Ramon" class="w-full h-full object-cover">
+                </div>
+                <h3 class="text-xl font-semibold">Ramon</h3>
+                <p class="text-primary text-sm">Desenvolvedor Full Stack</p>
+            </div>
+            <p class="text-gray-300 mb-6">
+                Ramon, o dev que jura ser o melhor. Vive colado na IA, cria sites incríveis e faz tudo parecer fácil.
+                Apaixonado por tecnologia e sempre buscando aprender coisas novas.
+            </p>
+            <div class="flex justify-center space-x-4">
+                <a href="#" class="w-10 h-10 flex items-center justify-center rounded-full bg-primary/20 hover:bg-primary/30 transition-colors duration-200 cursor-pointer">
+                    <i class="ri-github-fill"></i>
+                </a>
+                <a href="#" class="w-10 h-10 flex items-center justify-center rounded-full bg-primary/20 hover:bg-primary/30 transition-colors duration-200 cursor-pointer">
+                    <i class="ri-linkedin-fill"></i>
+                </a>
+                <a href="#" class="w-10 h-10 flex items-center justify-center rounded-full bg-primary/20 hover:bg-primary/30 transition-colors duration-200 cursor-pointer">
+                    <i class="ri-mail-fill"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = themeToggle.querySelector('i');
+        
+        if (localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.remove('dark');
+            themeIcon.classList.remove('ri-sun-line');
+            themeIcon.classList.add('ri-moon-line');
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+                themeIcon.classList.remove('ri-moon-line');
+                themeIcon.classList.add('ri-sun-line');
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeIcon.classList.remove('ri-sun-line');
+                themeIcon.classList.add('ri-moon-line');
+            }
+        });
+        
+        // Modal
+        const openModalBtn = document.getElementById('openModalBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalContent = document.getElementById('modalContent');
+        const developerModal = document.getElementById('developerModal');
+        
+        openModalBtn.addEventListener('click', () => {
+            developerModal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.add('active');
+            }, 10);
+        });
+        
+        function closeModal() {
+            modalContent.classList.remove('active');
+            setTimeout(() => {
+                developerModal.classList.add('hidden');
+            }, 300);
+        }
+        
+        closeModalBtn.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', closeModal);
+        
+        // Instagram Stalker Functionality
+        const usernameInput = document.getElementById('usernameInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const loadingSection = document.getElementById('loadingSection');
+        const errorMessage = document.getElementById('errorMessage');
+        
+        searchBtn.addEventListener('click', searchInstagramProfile);
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchInstagramProfile();
+            }
+        });
+        
+        function searchInstagramProfile() {
+            const username = usernameInput.value.trim();
+            
+            if (!username) {
+                showError("Digite o username da pessoa que você deseja stalkear no Instagram.");
+                return;
+            }
+            
+            // Show loading state
+            resultsSection.classList.add('hidden');
+            loadingSection.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            
+            // Call API
+            fetch(`https://yuxinze-apis.onrender.com/stalks/insta-stalk?username=${username}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Usuário não encontrado ou API indisponível');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.resultado) {
+                        displayResults(data.resultado);
+                    } else {
+                        throw new Error('Dados do usuário não encontrados');
+                    }
+                })
+                .catch(error => {
+                    showError(error.message || "Ocorreu um erro ao buscar o usuário, verifique ou tente novamente mais tarde.");
+                })
+                .finally(() => {
+                    loadingSection.classList.add('hidden');
+                });
+        }
+        
+        function displayResults(userData) {
+            // Set profile data
+            document.getElementById('profilePic').src = userData.foto_perfil_hd;
+            document.getElementById('fullName').textContent = userData.nome_completo || 'Nome não disponível';
+            document.getElementById('username').textContent = `@${userData.usuario}`;
+            document.getElementById('bio').textContent = userData.biografia || 'Sem biografia';
+            document.getElementById('postsCount').textContent = userData.postagens || '0';
+            document.getElementById('followersCount').textContent = userData.seguidores || '0';
+            document.getElementById('followingCount').textContent = userData.seguindo || '0';
+            
+            // Toggle verified badge
+            if (userData.verificado) {
+                document.getElementById('verifiedBadge').classList.remove('hidden');
+            } else {
+                document.getElementById('verifiedBadge').classList.add('hidden');
+            }
+            
+            // Toggle private badge
+            if (userData.privado) {
+                document.getElementById('privateBadge').classList.remove('hidden');
+            } else {
+                document.getElementById('privateBadge').classList.add('hidden');
+            }
+            
+            // Show results
+            resultsSection.classList.remove('hidden');
+        }
+        
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            usernameInput.classList.add('error-shake');
+            
+            setTimeout(() => {
+                usernameInput.classList.remove('error-shake');
+            }, 500);
+        }
+    </script>
+ </body>
+</html>
